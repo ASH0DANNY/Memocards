@@ -1,4 +1,3 @@
-import React from 'react';
 import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { FlashCardAndroidWidget } from './src/widgets/FlashCardAndroidWidget';
 import { buildUpcomingEntries } from './src/widgets/widgetContent';
