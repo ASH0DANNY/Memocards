@@ -1,0 +1,76 @@
+name: Build Android APK
+
+# Triggers on every push to main, and can also be run manually from the
+# Actions tab (the "Run workflow" button) without needing a push.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # We don't commit package.json / node_modules to this repo. Instead we
+      # scaffold a brand-new, guaranteed-compatible Expo baseline right here
+      # in CI (with real network access, unlike a sandboxed code assistant),
+      # then copy this repo's actual app code on top of it. This avoids ever
+      # shipping a hand-typed, possibly-stale set of dependency versions.
+      - name: Scaffold a fresh Expo baseline project
+        run: npx --yes create-expo-app@latest .scaffold --template blank-typescript --no-install
+
+      - name: Bring in baseline config + assets
+        run: |
+          cp .scaffold/package.json ./package.json
+          cp .scaffold/tsconfig.json ./tsconfig.json
+          [ -f .scaffold/babel.config.js ] && cp .scaffold/babel.config.js ./babel.config.js || true
+          [ -f .scaffold/app.json ] && cp .scaffold/app.json ./app.json || true
+          rm -rf ./assets
+          cp -r .scaffold/assets ./assets
+          rm -rf .scaffold
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install MemoCards-specific dependencies
+        run: |
+          npx expo install expo-widgets react-native-android-widget \
+            @react-native-async-storage/async-storage expo-document-picker \
+            expo-file-system expo-sharing expo-notifications
+          npm pkg set main=index.ts
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          # "Release" (not "Debug") so the JavaScript bundle is baked into the
+          # APK itself — it installs and runs standalone, with no Metro dev
+          # server needed. Expo's default prebuild signs release builds with
+          # the auto-generated debug keystore unless you configure your own,
+          # so this works with zero extra secrets — fine for sideloading and
+          # testing, not for a Play Store submission.
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: memocards-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
