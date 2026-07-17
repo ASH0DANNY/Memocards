@@ -67,8 +67,9 @@ jobs:
 
       - name: Generate native Android project
         run: |
-          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
           CI=1 npx expo prebuild --platform android
+          mkdir -p android
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
 
       - name: Build release APK
         working-directory: android
