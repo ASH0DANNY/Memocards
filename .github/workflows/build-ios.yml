@@ -1,0 +1,74 @@
+name: Build iOS App (via EAS)
+
+# Manual only — unlike the Android workflow, this consumes your EAS free-tier
+# build quota and (for a real-device build) requires an Apple Developer
+# Program membership, so it shouldn't fire on every push.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview             # installs on a real iPhone — needs Apple Developer Program + a registered device
+          - preview-simulator    # runs in the iOS Simulator on a Mac — no Apple Developer account needed
+
+jobs:
+  build-ios:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Scaffold a fresh Expo baseline project
+        run: npx --yes create-expo-app@latest .scaffold --template blank-typescript --no-install
+
+      - name: Bring in baseline config + assets
+        run: |
+          cp .scaffold/package.json ./package.json
+          cp .scaffold/tsconfig.json ./tsconfig.json
+          [ -f .scaffold/babel.config.js ] && cp .scaffold/babel.config.js ./babel.config.js || true
+          [ -f .scaffold/app.json ] && cp .scaffold/app.json ./app.json || true
+          rm -rf ./assets
+          cp -r .scaffold/assets ./assets
+          rm -rf .scaffold
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install MemoCards-specific dependencies
+        run: |
+          npx expo install expo-widgets react-native-android-widget \
+            @react-native-async-storage/async-storage expo-document-picker \
+            expo-file-system expo-sharing expo-notifications
+          npm pkg set main=index.ts
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      # EXPO_TOKEN must be added as a GitHub secret (Settings → Secrets and
+      # variables → Actions → New repository secret). Generate it at
+      # https://expo.dev/accounts/[your-account]/settings/access-tokens
+      #
+      # The very first iOS build for this project must be run once,
+      # interactively, from a machine where you can log into your Apple ID
+      # (see README) — that one-time run registers signing credentials with
+      # EAS. After that, this workflow can trigger builds non-interactively
+      # using the stored credentials.
+      - name: Trigger EAS Build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform ios --profile "${{ github.event.inputs.profile }}" --non-interactive --no-wait
+
+      - name: Where to find your build
+        run: |
+          echo "The build is now running on Expo's servers, not this GitHub runner."
+          echo "Track progress and download it from https://expo.dev — Projects → MemoCards → Builds"

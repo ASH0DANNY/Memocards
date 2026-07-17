@@ -55,6 +55,60 @@ Every push to `main` triggers a new build automatically. You can also
 trigger one without pushing anything: **Actions → Build Android APK → Run
 workflow**.
 
+## iOS builds (via EAS)
+
+This is fundamentally a different process from the Android workflow above,
+because Apple requires its own signing/build toolchain — EAS Build provides
+that in the cloud, but it's tied to your own Apple ID and (for a real device)
+your own paid Apple Developer account. There's no way around that; it's an
+Apple requirement, not a tooling limitation.
+
+**One-time setup (about 20–30 minutes):**
+
+1. Create a free account at [expo.dev](https://expo.dev) if you don't have
+   one.
+2. Decide which you want first — you can always do both later:
+   - **iOS Simulator build**: no Apple Developer account needed, but only
+     runs in Xcode's Simulator, so you need a Mac.
+   - **Real iPhone build**: works on your actual phone, no Mac needed to
+     install it, but requires enrolling in the
+     [Apple Developer Program](https://developer.apple.com/programs/) —
+     $99/year.
+3. Generate an access token: expo.dev → your account → **Settings → Access
+   Tokens → Create Token**. Copy it.
+4. In your GitHub repo: **Settings → Secrets and variables → Actions → New
+   repository secret**. Name it `EXPO_TOKEN`, paste the token.
+5. **The very first build must be triggered interactively, not from GitHub
+   Actions** — EAS needs you to log into your Apple ID once to generate (or
+   reuse) signing certificates, and CI can't do interactive logins. Easiest
+   place to do this one-time step is GitHub Codespaces (already has Node):
+   ```bash
+   npm install -g eas-cli
+   eas login
+   eas init                       # links this project to your Expo account, writes a projectId into app config
+   eas build --platform ios --profile preview-simulator   # or "preview" for a real device
+   ```
+   For a real-device build, EAS will also walk you through registering your
+   iPhone's UDID (it gives you a link to open *on the iPhone itself* —
+   no Mac or Xcode needed for that part).
+6. Once that first build succeeds, every future iOS build can be triggered
+   from GitHub: **Actions → Build iOS App (via EAS) → Run workflow**, choose
+   `preview` (device) or `preview-simulator`, and run it. It reuses the
+   credentials from step 5 automatically.
+
+**Getting the build**: unlike the Android workflow, the actual compilation
+happens on Expo's own servers (GitHub Actions just submits the job), so
+there's no artifact to download from GitHub. Track progress and get the
+install link at expo.dev → your project → **Builds**. For a device build,
+open that page's link *on your iPhone* to install it directly, similar to
+TestFlight.
+
+**Cost note**: Expo's free plan currently includes a monthly allotment of
+low-priority builds for both platforms (historically 15 iOS + 15 Android
+builds/month), which is plenty for personal testing — check
+[expo.dev/pricing](https://expo.dev/pricing) for current numbers before
+relying on this for anything beyond occasional builds.
+
 ## What's built
 
 **Phase 1 — core app**
@@ -76,12 +130,9 @@ workflow**.
   screen — a device setting, not something the app can force.
 - **iOS Home Screen + Lock Screen widgets** (`expo-widgets`): code is in
   `src/widgets/FlashCardWidget.tsx`, wired up in `app.config.ts`. Building
-  this for iOS needs a Mac-based pipeline (EAS Build handles this in the
-  cloud) and, importantly, an **Apple Developer Program membership
-  ($99/year)** to install a custom build on a real iPhone — that's an Apple
-  requirement, not something any tool works around. Say the word if you want
-  the EAS/iOS build steps set up next; it's a separate workflow from the
-  Android one above.
+  this requires Apple's own toolchain, which EAS Build provides in the
+  cloud — see **"iOS builds (via EAS)"** below for the full one-time setup
+  and an important cost caveat (Apple Developer Program membership).
 
 All three surfaces (Study screen, Android widget, lock screen) pull from the
 same deterministic rotation logic in `src/widgets/widgetContent.ts`, so they
@@ -163,7 +214,10 @@ the cloud, not on your home network.
 
 ```
 memocards/
-  .github/workflows/build-android.yml — builds the APK on every push
+  .github/workflows/
+    build-android.yml           — builds an installable APK on every push
+    build-ios.yml                — triggers an EAS iOS build (manual)
+  eas.json                      — EAS Build profiles (device + simulator)
   App.tsx                       — root component, tab switching, notification setup
   index.ts                      — custom entry point (registers widget task handler)
   app.config.ts                 — adds the iOS + Android widget config plugins
