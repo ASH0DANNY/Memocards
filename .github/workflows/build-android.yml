@@ -70,6 +70,15 @@ jobs:
           CI=1 npx expo prebuild --platform android
           mkdir -p android
           printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
+          python - <<'PY'
+from pathlib import Path
+p = Path('android/build.gradle')
+text = p.read_text()
+needle = "allprojects {\n  repositories {\n    google()\n    mavenCentral()\n    maven { url 'https://www.jitpack.io' }\n  }\n"
+replacement = "allprojects {\n  repositories {\n    google()\n    mavenCentral()\n    maven { url 'https://www.jitpack.io' }\n  }\n\n  configurations.all {\n    resolutionStrategy {\n      force 'androidx.work:work-runtime:2.8.1'\n      force 'androidx.work:work-runtime-ktx:2.8.1'\n    }\n  }\n"
+if "force 'androidx.work:work-runtime:2.8.1'" not in text:
+    p.write_text(text.replace(needle, replacement))
+PY
 
       - name: Build release APK
         working-directory: android
