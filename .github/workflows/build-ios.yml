@@ -35,7 +35,6 @@ jobs:
           cp .scaffold/package.json ./package.json
           cp .scaffold/tsconfig.json ./tsconfig.json
           [ -f .scaffold/babel.config.js ] && cp .scaffold/babel.config.js ./babel.config.js || true
-          [ -f .scaffold/app.json ] && cp .scaffold/app.json ./app.json || true
           rm -rf ./assets
           cp -r .scaffold/assets ./assets
           rm -rf .scaffold
