@@ -109,6 +109,24 @@ builds/month), which is plenty for personal testing — check
 [expo.dev/pricing](https://expo.dev/pricing) for current numbers before
 relying on this for anything beyond occasional builds.
 
+## Troubleshooting the GitHub Actions build
+
+**"Cannot automatically write to dynamic config at: app.config.ts... Add the
+following to your Expo config"** — some packages need to be listed in the
+`plugins` array to work (this is different from just being installed).
+Normally `expo install` adds these automatically, but only for a plain
+`app.json`; since this project uses `app.config.ts` (needed for the widget
+setup), it can't be auto-edited, so the install fails instead and tells you
+exactly what to add. Fix: open `app.config.ts` and add the named package to
+the `plugins` array as a plain string (see how `'expo-sharing'` and
+`'expo-notifications'` are already there for the pattern to copy). This repo
+already includes the plugins every currently-used package needs, but if you
+add a new package later and hit this, that's the fix.
+
+**Any other failure**: open the failed run in the **Actions** tab — every
+step's full output is there, including the exact command that failed and
+its complete error message.
+
 ## What's built
 
 **Phase 1 — core app**
