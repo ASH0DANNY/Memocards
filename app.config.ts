@@ -27,8 +27,12 @@ const androidWidgetConfig: WithAndroidWidgetsParams = {
 // by hand (the CI error message will tell you exactly which one).
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: config.name ?? 'MemoCards',
-  slug: config.slug ?? 'memocards',
+  // Hardcoded, not `config.name ?? 'MemoCards'` — the scaffolding step in CI
+  // creates a temp project whose folder name can end up here as a "valid
+  // but wrong" value (e.g. a name derived from a temp folder), which a `??`
+  // fallback won't catch since it's non-empty. These two must always win.
+  name: 'MemoCards',
+  slug: 'memocards',
   plugins: [
     ...(config.plugins ?? []),
     'expo-sharing',

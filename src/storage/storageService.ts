@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   rotationUnit: 'minutes',
   shuffle: true,
   lockScreenEnabled: false,
+  widgetLayout: 'detailed',
 };
 
 async function readJson<T>(key: string, fallback: T): Promise<T> {

@@ -15,6 +15,7 @@ export type Category = {
 };
 
 export type RotationUnit = 'minutes' | 'hours' | 'days';
+export type WidgetLayout = 'compact' | 'detailed';
 
 export type Settings = {
   themeId: string;
@@ -22,6 +23,7 @@ export type Settings = {
   rotationUnit: RotationUnit;
   shuffle: boolean;
   lockScreenEnabled: boolean;
+  widgetLayout: WidgetLayout;
 };
 
 export type BackupPayload = {

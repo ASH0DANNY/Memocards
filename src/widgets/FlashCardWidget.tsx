@@ -7,12 +7,15 @@ export type FlashCardWidgetProps = {
   categoryColor: string;
   front: string;
   back: string;
+  subTextColor: string;
+  layout: 'compact' | 'detailed';
 };
 
 function FlashCardWidgetComponent(props: FlashCardWidgetProps, environment: WidgetEnvironment) {
   'widget';
 
   const family = environment.widgetFamily;
+  const isCompact = props.layout === 'compact';
 
   // ---- Lock Screen families (small, often monochrome) ----
   if (family === 'accessoryInline') {
@@ -31,22 +34,29 @@ function FlashCardWidgetComponent(props: FlashCardWidgetProps, environment: Widg
     return (
       <VStack modifiers={[padding({ all: 4 })]}>
         <Text modifiers={[font({ size: 13, weight: 'bold' })]}>{props.front}</Text>
-        <Text modifiers={[font({ size: 11 })]}>{props.back}</Text>
+        {!isCompact && <Text modifiers={[font({ size: 11 })]}>{props.back}</Text>}
       </VStack>
     );
   }
 
   // ---- Home Screen families ----
-  const isSmall = family === 'systemSmall';
+  // A compact layout always behaves like the small size, regardless of how
+  // much room the chosen widget size actually has — this is the setting
+  // from Settings → Widget preview, not the OS-determined family.
+  const showDetails = !isCompact && family !== 'systemSmall';
 
   return (
     <VStack modifiers={[padding({ all: 14 })]}>
-      <Text modifiers={[font({ size: 11, weight: 'semibold' }), foregroundStyle(props.categoryColor)]}>
-        {props.categoryName}
+      {!isCompact && (
+        <Text modifiers={[font({ size: 11, weight: 'semibold' }), foregroundStyle(props.categoryColor)]}>
+          {props.categoryName}
+        </Text>
+      )}
+      <Text modifiers={[font({ size: isCompact || family === 'systemSmall' ? 18 : 22, weight: 'bold' })]}>
+        {props.front}
       </Text>
-      <Text modifiers={[font({ size: isSmall ? 18 : 22, weight: 'bold' })]}>{props.front}</Text>
-      {!isSmall && (
-        <Text modifiers={[font({ size: 14 }), foregroundStyle('#6B6B6B')]}>{props.back}</Text>
+      {showDetails && (
+        <Text modifiers={[font({ size: 14 }), foregroundStyle(props.subTextColor)]}>{props.back}</Text>
       )}
     </VStack>
   );

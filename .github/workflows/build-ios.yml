@@ -28,16 +28,18 @@ jobs:
           node-version: 20
 
       - name: Scaffold a fresh Expo baseline project
-        run: npx --yes create-expo-app@latest .scaffold --template blank-typescript --no-install
+        run: npx --yes create-expo-app@latest tmp-scaffold --template blank-typescript --no-install
 
       - name: Bring in baseline config + assets
         run: |
-          cp .scaffold/package.json ./package.json
-          cp .scaffold/tsconfig.json ./tsconfig.json
-          [ -f .scaffold/babel.config.js ] && cp .scaffold/babel.config.js ./babel.config.js || true
+          cp tmp-scaffold/package.json ./package.json
+          cp tmp-scaffold/tsconfig.json ./tsconfig.json
+          [ -f tmp-scaffold/babel.config.js ] && cp tmp-scaffold/babel.config.js ./babel.config.js || true
+          [ -f tmp-scaffold/app.json ] && cp tmp-scaffold/app.json ./app.json || true
           rm -rf ./assets
-          cp -r .scaffold/assets ./assets
-          rm -rf .scaffold
+          cp -r tmp-scaffold/assets ./assets
+          rm -rf tmp-scaffold
+          npm pkg set name=memocards
 
       - name: Install dependencies
         run: npm install

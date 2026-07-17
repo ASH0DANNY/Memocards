@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { RotationUnit, Settings } from '../types';
+import { RotationUnit, Settings, WidgetLayout } from '../types';
 import { DEFAULT_SETTINGS, getSettings, saveSettings } from '../storage/storageService';
 import { refreshAllSurfaces } from '../widgets/syncAll';
 import { getTheme, Theme } from './themes';
@@ -12,6 +12,7 @@ type ThemeContextValue = {
   setRotation: (value: number, unit: RotationUnit) => Promise<void>;
   setShuffle: (shuffle: boolean) => Promise<void>;
   setLockScreenEnabled: (enabled: boolean) => Promise<void>;
+  setWidgetLayout: (layout: WidgetLayout) => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -68,11 +69,29 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [settings, persist]
   );
 
+  const setWidgetLayout = useCallback(
+    async (layout: WidgetLayout) => {
+      const next = { ...settings, widgetLayout: layout };
+      await persist(next);
+      refreshAllSurfaces();
+    },
+    [settings, persist]
+  );
+
   const theme = getTheme(settings.themeId);
 
   return (
     <ThemeContext.Provider
-      value={{ theme, settings, loaded, setThemeId, setRotation, setShuffle, setLockScreenEnabled }}
+      value={{
+        theme,
+        settings,
+        loaded,
+        setThemeId,
+        setRotation,
+        setShuffle,
+        setLockScreenEnabled,
+        setWidgetLayout,
+      }}
     >
       {children}
     </ThemeContext.Provider>

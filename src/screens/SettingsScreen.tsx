@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -14,7 +14,16 @@ import { Platform } from 'react-native';
 import { useAppTheme } from '../theme/ThemeContext';
 import { THEMES } from '../theme/themes';
 import { exportBackup, importBackup } from '../storage/backupService';
-import { RotationUnit } from '../types';
+import { getCards, getCategories } from '../storage/storageService';
+import { RotationUnit, WidgetLayout } from '../types';
+import WidgetPreviewDemo from '../components/WidgetPreviewDemo';
+
+const PLACEHOLDER_SAMPLE = {
+  categoryName: 'Indian History',
+  categoryColor: '#2D6A4F',
+  front: '1857',
+  back: 'Indian Rebellion of 1857',
+};
 
 const PRESETS: { label: string; value: number; unit: RotationUnit }[] = [
   { label: '15 min', value: 15, unit: 'minutes' },
@@ -24,10 +33,32 @@ const PRESETS: { label: string; value: number; unit: RotationUnit }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { theme, settings, setThemeId, setRotation, setShuffle, setLockScreenEnabled } = useAppTheme();
+  const { theme, settings, setThemeId, setRotation, setShuffle, setLockScreenEnabled, setWidgetLayout } =
+    useAppTheme();
   const [customValue, setCustomValue] = useState(String(settings.rotationValue));
   const [customUnit, setCustomUnit] = useState<RotationUnit>(settings.rotationUnit);
   const [busy, setBusy] = useState(false);
+  const [previewSample, setPreviewSample] = useState(PLACEHOLDER_SAMPLE);
+
+  useEffect(() => {
+    (async () => {
+      const [cards, categories] = await Promise.all([getCards(), getCategories()]);
+      const enabledIds = new Set(categories.filter((c) => c.enabled).map((c) => c.id));
+      const card = cards.find((c) => enabledIds.has(c.categoryId));
+      if (card) {
+        const category = categories.find((c) => c.id === card.categoryId);
+        setPreviewSample({
+          categoryName: category?.name ?? '',
+          categoryColor: category?.color ?? theme.accent,
+          front: card.front,
+          back: card.back,
+        });
+      }
+    })();
+    // Only needs to run once on mount — this is just a representative sample,
+    // not something that needs to track live edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyCustom = () => {
     const num = parseInt(customValue, 10);
@@ -109,7 +140,7 @@ export default function SettingsScreen() {
 
         <Text style={[styles.sectionTitle, { color: theme.textColor }]}>Rotation schedule</Text>
         <Text style={[styles.mutedText, { color: theme.subTextColor }]}>
-          How often the lock screen card (and, later, your home screen widget) moves to the next card.
+          How often the lock screen card and your home screen widget move to the next card.
         </Text>
         <View style={styles.presetsRow}>
           {PRESETS.map((p) => {
@@ -164,11 +195,42 @@ export default function SettingsScreen() {
           <Switch value={settings.shuffle} onValueChange={setShuffle} />
         </View>
 
+        <Text style={[styles.sectionTitle, { color: theme.textColor }]}>Widget preview</Text>
+        <Text style={[styles.mutedText, { color: theme.subTextColor }]}>
+          What your widget looks like at different sizes, in your current theme. The size itself is chosen by
+          you when you add the widget (long-press your Home Screen → Widgets, or customize your Lock Screen on
+          iOS) — this is a preview to help you decide, not a setting.
+        </Text>
+        <WidgetPreviewDemo theme={theme} layout={settings.widgetLayout} sample={previewSample} />
+        <View style={styles.presetsRow}>
+          {(['detailed', 'compact'] as WidgetLayout[]).map((l) => {
+            const active = settings.widgetLayout === l;
+            return (
+              <TouchableOpacity
+                key={l}
+                onPress={() => setWidgetLayout(l)}
+                style={[
+                  styles.presetChip,
+                  { borderColor: theme.accent, backgroundColor: active ? theme.accent : 'transparent' },
+                ]}
+              >
+                <Text style={{ color: active ? '#fff' : theme.accent, fontSize: 13, fontWeight: '600' }}>
+                  {l === 'detailed' ? 'Detailed' : 'Compact'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Text style={[styles.mutedText, { color: theme.subTextColor, marginTop: 8 }]}>
+          Detailed shows the category and both sides of the card where there's room. Compact always shows just
+          the front, larger — better for small widgets or a quick glance.
+        </Text>
+
         <Text style={[styles.sectionTitle, { color: theme.textColor }]}>Lock screen</Text>
         <Text style={[styles.mutedText, { color: theme.subTextColor }]}>
           {Platform.OS === 'android'
             ? 'Android does not support resizable lock-screen widgets, so this shows your card as a lock-screen notification instead. Make sure your device shows full notification content on the lock screen (Settings → Notifications → "Show all notification content").'
-            : 'On iOS, real Lock Screen widgets will be available in the next phase of this app, once native widget support is added.'}
+            : 'On iOS, add a real Lock Screen widget from your Lock Screen\'s customize menu once this app has been built with the iOS widget included (see the README\'s "iOS builds" section).'}
         </Text>
         <View style={styles.switchRow}>
           <Text style={{ color: theme.textColor, fontSize: 15 }}>Show cards on lock screen</Text>

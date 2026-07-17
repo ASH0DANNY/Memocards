@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 import FlashCardWidget from './FlashCardWidget';
 import { buildUpcomingEntries } from './widgetContent';
+import { getSettings } from '../storage/storageService';
+import { getTheme } from '../theme/themes';
 
 // iOS WidgetKit has a system-wide daily refresh budget shared across every
 // app's widgets (Apple doesn't publish an exact number, but it's commonly a
@@ -13,17 +15,21 @@ const TIMELINE_LENGTH = 24;
 export async function syncIOSWidget(): Promise<void> {
   if (Platform.OS !== 'ios') return;
 
-  const entries = await buildUpcomingEntries(TIMELINE_LENGTH);
+  const [entries, settings] = await Promise.all([buildUpcomingEntries(TIMELINE_LENGTH), getSettings()]);
   if (entries.length === 0) return;
+
+  const theme = getTheme(settings.themeId);
 
   FlashCardWidget.updateTimeline(
     entries.map((entry) => ({
       date: entry.date,
       props: {
         categoryName: entry.category?.name ?? '',
-        categoryColor: entry.category?.color ?? '#2D6A4F',
+        categoryColor: entry.category?.color ?? theme.accent,
         front: entry.card.front,
         back: entry.card.back,
+        subTextColor: theme.subTextColor,
+        layout: settings.widgetLayout,
       },
     }))
   );

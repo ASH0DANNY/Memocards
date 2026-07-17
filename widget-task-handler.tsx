@@ -2,6 +2,8 @@ import React from 'react';
 import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { FlashCardAndroidWidget } from './src/widgets/FlashCardAndroidWidget';
 import { buildUpcomingEntries } from './src/widgets/widgetContent';
+import { getSettings } from './src/storage/storageService';
+import { getTheme } from './src/theme/themes';
 
 const nameToWidget = {
   FlashCard: FlashCardAndroidWidget,
@@ -15,15 +17,22 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case 'WIDGET_ADDED':
     case 'WIDGET_UPDATE':
     case 'WIDGET_RESIZED': {
-      const [current] = await buildUpcomingEntries(1);
+      const [entries, settings] = await Promise.all([buildUpcomingEntries(1), getSettings()]);
+      const [current] = entries;
+      const theme = getTheme(settings.themeId);
 
       if (!current) {
         props.renderWidget(
           <FlashCardAndroidWidget
             categoryName=""
-            categoryColor="#2D6A4F"
+            categoryColor={theme.accent}
             front="No cards yet"
             back="Open MemoCards to add or enable some"
+            layout={settings.widgetLayout}
+            background={theme.cardBackground}
+            textColor={theme.textColor}
+            subTextColor={theme.subTextColor}
+            borderRadius={theme.borderRadius}
           />
         );
         return;
@@ -32,9 +41,14 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
       props.renderWidget(
         <FlashCardAndroidWidget
           categoryName={current.category?.name ?? ''}
-          categoryColor={current.category?.color ?? '#2D6A4F'}
+          categoryColor={current.category?.color ?? theme.accent}
           front={current.card.front}
           back={current.card.back}
+          layout={settings.widgetLayout}
+          background={theme.cardBackground}
+          textColor={theme.textColor}
+          subTextColor={theme.subTextColor}
+          borderRadius={theme.borderRadius}
         />
       );
       break;

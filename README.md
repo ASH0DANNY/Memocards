@@ -111,6 +111,15 @@ relying on this for anything beyond occasional builds.
 
 ## Troubleshooting the GitHub Actions build
 
+**"The project name '...' must not start or end with a '.'"** (Gradle,
+during `assembleRelease`) — the temp scaffolding folder's name leaked into
+the generated Android project's name. Already fixed in this version (the
+scaffold folder is named `tmp-scaffold`, and `app.config.ts` hardcodes
+`name`/`slug` instead of falling back to whatever came from the scaffold) —
+mentioned here in case you ever rename things in the workflow and reintroduce
+it: any value used as the Expo config's `name`/`slug` ends up as Android's
+Gradle project name too, so it needs to be a clean, valid identifier.
+
 **"Cannot automatically write to dynamic config at: app.config.ts... Add the
 following to your Expo config"** — some packages need to be listed in the
 `plugins` array to work (this is different from just being installed).
@@ -156,6 +165,19 @@ All three surfaces (Study screen, Android widget, lock screen) pull from the
 same deterministic rotation logic in `src/widgets/widgetContent.ts`, so they
 stay in sync with each other and with your chosen rotation schedule.
 
+**Phase 3 — widget style & size preview**
+- **Settings → Widget preview**: live demo tiles showing Small/Medium/Large
+  footprints in your current theme, using a real card from your library
+  (`src/components/WidgetPreviewDemo.tsx`). This is a preview, not a
+  setting — actual widget size and screen position are chosen by you when
+  you add/resize the widget on your Home Screen or Lock Screen; no app can
+  override that on either OS.
+- **Compact / Detailed layout toggle**: this one *is* a real setting — it
+  controls how much content the widget actually shows (front only, vs.
+  category + front + back where there's room), and it's wired into every
+  surface: the Android widget, the iOS widget, and the demo preview all read
+  the same `settings.widgetLayout` value.
+
 ## Trying bulk import
 
 Two ready-made sample files are in `sample-data/`: `sample-cards.json` and
@@ -198,10 +220,11 @@ workflow above is a good reference for exactly what commands to run — do the
 same steps on your own machine or in GitHub Codespaces:
 
 ```bash
-npx create-expo-app@latest .scaffold --template blank-typescript
-cp .scaffold/package.json .scaffold/tsconfig.json .scaffold/app.json ./
-cp -r .scaffold/assets ./assets
-rm -rf .scaffold
+npx create-expo-app@latest tmp-scaffold --template blank-typescript
+cp tmp-scaffold/package.json tmp-scaffold/tsconfig.json tmp-scaffold/app.json ./
+cp -r tmp-scaffold/assets ./assets
+rm -rf tmp-scaffold
+npm pkg set name=memocards
 npm install
 npx expo install expo-widgets react-native-android-widget \
   @react-native-async-storage/async-storage expo-document-picker \
@@ -260,6 +283,7 @@ memocards/
       ThemeContext.tsx          — React context for theme + settings
     components/
       FlashCard.tsx             — flippable card UI (in-app Study screen)
+      WidgetPreviewDemo.tsx     — Settings → Widget preview size/style demo
     screens/
       StudyScreen.tsx
       LibraryScreen.tsx
