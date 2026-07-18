@@ -3,6 +3,7 @@ import FlashCardWidget from './FlashCardWidget';
 import { buildUpcomingEntries } from './widgetContent';
 import { getSettings } from '../storage/storageService';
 import { getTheme } from '../theme/themes';
+import { formatCategoryLabel } from '../utils';
 
 // iOS WidgetKit has a system-wide daily refresh budget shared across every
 // app's widgets (Apple doesn't publish an exact number, but it's commonly a
@@ -24,7 +25,7 @@ export async function syncIOSWidget(): Promise<void> {
     entries.map((entry) => ({
       date: entry.date,
       props: {
-        categoryName: entry.category?.name ?? '',
+        categoryName: formatCategoryLabel(entry.category),
         categoryColor: entry.category?.color ?? theme.accent,
         front: entry.card.front,
         back: entry.card.back,

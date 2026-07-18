@@ -5,6 +5,7 @@ import { FlashCardAndroidWidget } from './FlashCardAndroidWidget';
 import { buildUpcomingEntries } from './widgetContent';
 import { getSettings } from '../storage/storageService';
 import { getTheme } from '../theme/themes';
+import { formatCategoryLabel } from '../utils';
 
 // Must match the widget "name" configured in the react-native-android-widget
 // config plugin block in app.config.ts, and the key used in
@@ -26,7 +27,7 @@ export async function syncAndroidWidget(): Promise<void> {
     widgetName: WIDGET_NAME,
     renderWidget: () => (
       <FlashCardAndroidWidget
-        categoryName={current.category?.name ?? ''}
+        categoryName={formatCategoryLabel(current.category)}
         categoryColor={current.category?.color ?? theme.accent}
         front={current.card.front}
         back={current.card.back}

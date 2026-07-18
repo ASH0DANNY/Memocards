@@ -1,8 +1,10 @@
+import React from 'react';
 import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { FlashCardAndroidWidget } from './src/widgets/FlashCardAndroidWidget';
 import { buildUpcomingEntries } from './src/widgets/widgetContent';
 import { getSettings } from './src/storage/storageService';
 import { getTheme } from './src/theme/themes';
+import { formatCategoryLabel } from './src/utils';
 
 const nameToWidget = {
   FlashCard: FlashCardAndroidWidget,
@@ -39,7 +41,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
       props.renderWidget(
         <FlashCardAndroidWidget
-          categoryName={current.category?.name ?? ''}
+          categoryName={formatCategoryLabel(current.category)}
           categoryColor={current.category?.color ?? theme.accent}
           front={current.card.front}
           back={current.card.back}

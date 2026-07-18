@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Theme } from '../theme/themes';
 import { Card, Category } from '../types';
+import { formatCategoryLabel } from '../utils';
 
 type Props = {
   card: Card;
@@ -40,7 +41,7 @@ export default function FlashCard({ card, category, theme }: Props) {
       >
         {category && (
           <View style={[styles.badge, { backgroundColor: theme.accent }]}>
-            <Text style={styles.badgeText}>{category.name}</Text>
+            <Text style={styles.badgeText}>{formatCategoryLabel(category)}</Text>
           </View>
         )}
         <Text style={[styles.text, { color: theme.textColor }]}>{card.front}</Text>

@@ -1,9 +1,9 @@
 [
-  { "category": "Indian History", "front": "1526", "back": "Battle of Panipat — start of Mughal rule" },
-  { "category": "Indian History", "front": "1857", "back": "Indian Rebellion of 1857 (First War of Independence)" },
-  { "category": "Indian History", "front": "1947", "back": "Indian Independence" },
-  { "category": "Hindi Alphabet", "front": "अ", "back": "a (as in 'apple')" },
-  { "category": "Hindi Alphabet", "front": "आ", "back": "aa (as in 'father')" },
-  { "category": "Formulas", "front": "Area of a circle", "back": "π r²" },
-  { "category": "Formulas", "front": "Speed", "back": "distance ÷ time" }
+  { "category": "Indian History", "categoryIcon": "📜", "front": "1526", "back": "Battle of Panipat — start of Mughal rule" },
+  { "category": "Indian History", "categoryIcon": "📜", "front": "1857", "back": "Indian Rebellion of 1857 (First War of Independence)" },
+  { "category": "Indian History", "categoryIcon": "📜", "front": "1947", "back": "Indian Independence" },
+  { "category": "Hindi Alphabet", "categoryIcon": "🔤", "front": "अ", "back": "a (as in 'apple')" },
+  { "category": "Hindi Alphabet", "categoryIcon": "🔤", "front": "आ", "back": "aa (as in 'father')" },
+  { "category": "Formulas", "categoryIcon": "➗", "front": "Area of a circle", "back": "π r²" },
+  { "category": "Formulas", "categoryIcon": "➗", "front": "Speed", "back": "distance ÷ time" }
 ]

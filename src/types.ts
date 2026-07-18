@@ -12,6 +12,7 @@ export type Category = {
   name: string;
   enabled: boolean;
   color: string;
+  icon?: string;
 };
 
 export type RotationUnit = 'minutes' | 'hours' | 'days';

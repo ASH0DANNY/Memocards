@@ -178,6 +178,13 @@ stay in sync with each other and with your chosen rotation schedule.
   surface: the Android widget, the iOS widget, and the demo preview all read
   the same `settings.widgetLayout` value.
 
+- **Category icons**: a small curated set of emoji (📜 📅 🈶 🔤 ➗ 🧪 🌍 ⚖️ 📖
+  💡) you can assign per category in Library, shown everywhere the category
+  name appears — Study, Library, both real widgets, and the preview demo.
+  Emoji rather than image assets deliberately: it renders identically and
+  natively across the RN UI, the Android widget, and the iOS SwiftUI widget
+  with zero extra asset bundling.
+
 ## Trying bulk import
 
 Two ready-made sample files are in `sample-data/`: `sample-cards.json` and
@@ -187,7 +194,9 @@ either one.
 Your own files should follow the same shape:
 - **`.txt`**: one card per line, `Category | Front | Back`
 - **`.json`**: an array of `{ "category": "...", "front": "...", "back": "..." }`
-  (or wrapped as `{ "cards": [ ... ] }`)
+  (or wrapped as `{ "cards": [ ... ] }`). Add `"categoryIcon": "📜"` (any single
+  emoji) to set an icon for a newly-created category — ignored if that
+  category already exists.
 
 ## Known limitations
 

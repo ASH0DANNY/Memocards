@@ -28,6 +28,7 @@ import {
 import { importCardsFromFile } from '../storage/importService';
 import { useAppTheme } from '../theme/ThemeContext';
 import { refreshAllSurfaces } from '../widgets/syncAll';
+import { CATEGORY_ICONS, formatCategoryLabel } from '../utils';
 
 const PALETTE = ['#2D6A4F', '#087E8B', '#E85D4C', '#7B5EA7', '#C97B3D', '#3563E9'];
 
@@ -36,6 +37,7 @@ export default function LibraryScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState<string | undefined>(CATEGORY_ICONS[0]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCard, setEditingCard] = useState<Card | null>(null);
@@ -68,10 +70,13 @@ export default function LibraryScreen() {
       name,
       enabled: true,
       color: PALETTE[categories.length % PALETTE.length],
+      icon: newCategoryIcon,
     };
     await addCategory(category);
     setNewCategoryName('');
+    setNewCategoryIcon(CATEGORY_ICONS[0]);
     load();
+    refreshAllSurfaces();
   };
 
   const handleDeleteCategory = (id: string, name: string) => {
@@ -177,7 +182,7 @@ export default function LibraryScreen() {
         {categories.map((cat) => (
           <View key={cat.id} style={[styles.row, { borderColor: theme.cardBorder }]}>
             <View style={[styles.dot, { backgroundColor: cat.color }]} />
-            <Text style={[styles.rowText, { color: theme.textColor }]}>{cat.name}</Text>
+            <Text style={[styles.rowText, { color: theme.textColor }]}>{formatCategoryLabel(cat)}</Text>
             <Text style={[styles.countText, { color: theme.subTextColor }]}>
               {cards.filter((c) => c.categoryId === cat.id).length}
             </Text>
@@ -187,6 +192,23 @@ export default function LibraryScreen() {
             </TouchableOpacity>
           </View>
         ))}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+          {[undefined, ...CATEGORY_ICONS].map((icon) => (
+            <TouchableOpacity
+              key={icon ?? 'none'}
+              onPress={() => setNewCategoryIcon(icon)}
+              style={[
+                styles.iconChip,
+                {
+                  borderColor: theme.accent,
+                  backgroundColor: newCategoryIcon === icon ? theme.accent : 'transparent',
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 16 }}>{icon ?? '—'}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
         <View style={styles.addCategoryRow}>
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0, borderColor: theme.cardBorder, color: theme.textColor }]}
@@ -226,7 +248,7 @@ export default function LibraryScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.cardFront, { color: theme.textColor }]}>{card.front}</Text>
                 <Text style={[styles.cardBack, { color: theme.subTextColor }]}>{card.back}</Text>
-                {cat && <Text style={[styles.cardCat, { color: cat.color }]}>{cat.name}</Text>}
+                {cat && <Text style={[styles.cardCat, { color: cat.color }]}>{formatCategoryLabel(cat)}</Text>}
               </View>
               <TouchableOpacity onPress={() => handleDeleteCard(card.id)} style={styles.deleteBtn}>
                 <Text style={{ color: '#C0392B', fontSize: 13 }}>Delete</Text>
@@ -258,7 +280,7 @@ export default function LibraryScreen() {
                   ]}
                 >
                   <Text style={{ color: formCategoryId === cat.id ? '#fff' : cat.color, fontSize: 13 }}>
-                    {cat.name}
+                    {formatCategoryLabel(cat)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -315,6 +337,14 @@ const styles = StyleSheet.create({
   countText: { fontSize: 13, marginRight: 10 },
   deleteBtn: { marginLeft: 12 },
   addCategoryRow: { flexDirection: 'row', marginHorizontal: 20, marginTop: 12, gap: 10 },
+  iconChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   input: {
     borderWidth: 1,
     borderRadius: 10,

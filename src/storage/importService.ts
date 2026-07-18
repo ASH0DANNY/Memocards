@@ -7,6 +7,7 @@ const PALETTE = ['#2D6A4F', '#087E8B', '#E85D4C', '#7B5EA7', '#C97B3D', '#3563E9
 
 type RawCard = {
   category: string;
+  categoryIcon?: string;
   front: string;
   back: string;
   tags?: string[];
@@ -21,7 +22,9 @@ export type ImportResult = {
  * Accepts either:
  *   1. A plain array:      [{ "category": "...", "front": "...", "back": "..." }, ...]
  *   2. A wrapped object:    { "cards": [ ... same shape ... ] }
- * "front"/"back" also accept "question"/"answer" as aliases.
+ * "front"/"back" also accept "question"/"answer" as aliases. An optional
+ * "categoryIcon" (any single emoji) sets the icon for a newly-created
+ * category — ignored if the category already exists.
  */
 function parseJsonCards(content: string): RawCard[] {
   const data = JSON.parse(content);
@@ -35,6 +38,7 @@ function parseJsonCards(content: string): RawCard[] {
       const item = raw as Record<string, unknown>;
       return {
         category: String(item.category ?? item.categoryName ?? 'Imported').trim() || 'Imported',
+        categoryIcon: typeof item.categoryIcon === 'string' ? item.categoryIcon : undefined,
         front: String(item.front ?? item.question ?? '').trim(),
         back: String(item.back ?? item.answer ?? '').trim(),
         tags: Array.isArray(item.tags) ? (item.tags as string[]) : undefined,
@@ -103,6 +107,7 @@ export async function importCardsFromFile(): Promise<ImportResult> {
         name: item.category,
         enabled: true,
         color: PALETTE[byName.size % PALETTE.length],
+        icon: item.categoryIcon,
       };
       byName.set(key, category);
       newCategoryCount += 1;
