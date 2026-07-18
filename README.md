@@ -111,6 +111,22 @@ relying on this for anything beyond occasional builds.
 
 ## Troubleshooting the GitHub Actions build
 
+**"Unable to resolve module @expo/ui/swift-ui"** (Metro, during
+`createBundleReleaseJsAndAssets`) — Metro bundles the entire reachable JS
+import graph regardless of any `Platform.OS` runtime checks in your code, so
+an unconditional import of an iOS-only (or Android-only) package breaks the
+*other* platform's build even if it's never actually called there. Already
+fixed in this version using React Native's standard mechanism for this:
+platform-specific file extensions. `src/widgets/iosWidgetSync.ios.ts` (real)
+and `.android.ts` (no-op stub) — same for `androidWidgetSync` and
+`registerAndroidWidgetHandler` — mean Metro picks the correct file per
+platform and the wrong-platform library import never enters that platform's
+bundle graph at all. If you add a new platform-specific package later, this
+is the pattern to copy: split the file that imports it into `.ios.ts` /
+`.android.ts` versions, and make sure everything that imports *that* file
+uses the extension-less name (e.g. `./iosWidgetSync`, not
+`./iosWidgetSync.ios`) so Metro's resolution actually kicks in.
+
 **"Duplicate class androidx.work.OneTimeWorkRequestKt / PeriodicWorkRequestKt
 found in modules work-runtime-*.aar and work-runtime-ktx-*.aar"** (Gradle,
 during `assembleRelease`) — two native modules pulled in mismatched versions
@@ -170,7 +186,7 @@ its complete error message.
   notification settings allow "show all notification content" on the lock
   screen — a device setting, not something the app can force.
 - **iOS Home Screen + Lock Screen widgets** (`expo-widgets`): code is in
-  `src/widgets/FlashCardWidget.tsx`, wired up in `app.config.ts`. Building
+  `src/widgets/FlashCardWidget.ios.tsx`, wired up in `app.config.ts`. Building
   this requires Apple's own toolchain, which EAS Build provides in the
   cloud — see **"iOS builds (via EAS)"** below for the full one-time setup
   and an important cost caveat (Apple Developer Program membership).
@@ -285,9 +301,9 @@ memocards/
   plugins/
     withAndroidWorkManagerFix.js — local config plugin fixing a Gradle dependency conflict
   App.tsx                       — root component, tab switching, notification setup
-  index.ts                      — custom entry point (registers widget task handler)
+  index.ts                      — entry point (registers root component + Android widget handler)
   app.config.ts                 — adds the iOS + Android widget config plugins
-  widget-task-handler.tsx       — handles Android widget add/resize/update events
+  widget-task-handler.tsx       — handles Android widget add/resize/update events (Android-only reachable)
   src/
     types.ts                    — all shared TypeScript types
     storage/
@@ -297,12 +313,16 @@ memocards/
     notifications/
       lockScreenService.ts      — schedules the lock-screen notification cards (Android)
     widgets/
-      widgetContent.ts          — deterministic "what's showing right now" logic
-      FlashCardWidget.tsx       — iOS Home/Lock Screen widget layout
-      iosWidgetSync.ts          — pushes an upcoming timeline to the iOS widget
-      FlashCardAndroidWidget.tsx — Android home screen widget layout
-      androidWidgetSync.tsx     — pushes current card to the Android widget
-      syncAll.ts                — refreshes every surface at once
+      widgetContent.ts               — deterministic "what's showing right now" logic
+      FlashCardWidget.ios.tsx        — iOS Home/Lock Screen widget layout
+      iosWidgetSync.ios.ts           — real: pushes an upcoming timeline to the iOS widget
+      iosWidgetSync.android.ts       — no-op stub (see Troubleshooting: Metro platform resolution)
+      FlashCardAndroidWidget.tsx     — Android home screen widget layout
+      androidWidgetSync.android.tsx  — real: pushes current card to the Android widget
+      androidWidgetSync.ios.ts       — no-op stub
+      registerAndroidWidgetHandler.android.ts — real: wires up the Android widget task handler
+      registerAndroidWidgetHandler.ios.ts     — no-op stub
+      syncAll.ts                     — refreshes every surface at once
     theme/
       themes.ts                 — 5 built-in theme presets
       ThemeContext.tsx          — React context for theme + settings
