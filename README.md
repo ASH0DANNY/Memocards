@@ -111,6 +111,20 @@ relying on this for anything beyond occasional builds.
 
 ## Troubleshooting the GitHub Actions build
 
+**"Duplicate class androidx.work.OneTimeWorkRequestKt / PeriodicWorkRequestKt
+found in modules work-runtime-*.aar and work-runtime-ktx-*.aar"** (Gradle,
+during `assembleRelease`) — two native modules pulled in mismatched versions
+of Google's WorkManager library; since androidx.work 2.8, its Kotlin
+extensions merged into the base artifact, so an old `-ktx` artifact and a
+new base artifact both defining the same classes collide. Already fixed in
+this version via `plugins/withAndroidWorkManagerFix.js`, a small custom
+config plugin that forces both artifacts to the same version — it patches
+the generated `android/build.gradle` automatically on every `expo prebuild`,
+so it survives the fact that `android/` itself is regenerated fresh each CI
+run rather than committed. If a *different* duplicate-class error shows up
+for some other library later, the fix is the same shape: add another
+`force '<group>:<artifact>:<version>'` line inside that plugin.
+
 **"The project name '...' must not start or end with a '.'"** (Gradle,
 during `assembleRelease`) — the temp scaffolding folder's name leaked into
 the generated Android project's name. Already fixed in this version (the
@@ -268,6 +282,8 @@ memocards/
     build-android.yml           — builds an installable APK on every push
     build-ios.yml                — triggers an EAS iOS build (manual)
   eas.json                      — EAS Build profiles (device + simulator)
+  plugins/
+    withAndroidWorkManagerFix.js — local config plugin fixing a Gradle dependency conflict
   App.tsx                       — root component, tab switching, notification setup
   index.ts                      — custom entry point (registers widget task handler)
   app.config.ts                 — adds the iOS + Android widget config plugins

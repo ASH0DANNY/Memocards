@@ -19,12 +19,14 @@ const androidWidgetConfig: WithAndroidWidgetsParams = {
 // This file is evaluated *in addition to* app.json — app.json's fields are
 // passed in as `config` below and spread first, so keep app.json as-is
 // (name, slug, icon, splash, android.package, etc.) and this file only adds
-// config plugins on top of it: the widget plugins, plus expo-sharing and
-// expo-notifications, both of which *require* being listed here — `expo
-// install` can normally add plugins like these automatically, but only for
-// a plain app.json. Since this is a dynamic (code) config, it can't be
-// auto-edited, so any future package that needs a plugin must be added here
-// by hand (the CI error message will tell you exactly which one).
+// config plugins on top of it: the widget plugins, expo-sharing and
+// expo-notifications (both *require* being listed here — `expo install` can
+// normally add plugins like these automatically, but only for a plain
+// app.json; since this is a dynamic/code config it can't be auto-edited, so
+// any future package needing a plugin must be added here by hand, per the
+// exact name the CI error message gives you), and a local custom plugin
+// (./plugins/withAndroidWorkManagerFix.js) that patches a Gradle dependency
+// conflict — see that file for details.
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   // Hardcoded, not `config.name ?? 'MemoCards'` — the scaffolding step in CI
@@ -37,6 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...(config.plugins ?? []),
     'expo-sharing',
     'expo-notifications',
+    './plugins/withAndroidWorkManagerFix.js',
     ['react-native-android-widget', androidWidgetConfig],
     [
       'expo-widgets',
